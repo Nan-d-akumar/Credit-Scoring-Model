@@ -61,6 +61,19 @@ print("Accuracy:", accuracy_score(y_test, y_pred))
 print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
 print("\nClassification Report:\n", classification_report(y_test, y_pred))
 
+feature_names = X.columns
+coefficients = model.named_steps['logreg'].coef_[0]
+
+importance = pd.DataFrame({
+    "Feature": feature_names,
+    "Coefficient": coefficients
+})
+
+importance = importance.sort_values(by="Coefficient", ascending=False)
+
+print("\nTop Important Features:")
+print(importance.head(10))
+
 print("\n------ RANDOM FOREST ------")
 
 rf_model = RandomForestClassifier(
