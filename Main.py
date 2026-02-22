@@ -60,3 +60,19 @@ y_pred = model.predict(X_test)
 print("Accuracy:", accuracy_score(y_test, y_pred))
 print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
 print("\nClassification Report:\n", classification_report(y_test, y_pred))
+
+print("\n------ RANDOM FOREST ------")
+
+rf_model = RandomForestClassifier(
+    n_estimators=200,
+    random_state=42,
+    class_weight='balanced'
+)
+
+rf_model.fit(X_train, y_train)
+
+rf_pred = rf_model.predict(X_test)
+
+print("Accuracy:", accuracy_score(y_test, rf_pred))
+print("\nConfusion Matrix:\n", confusion_matrix(y_test, rf_pred))
+print("\nClassification Report:\n", classification_report(y_test, rf_pred))
