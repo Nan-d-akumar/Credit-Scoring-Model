@@ -89,3 +89,9 @@ rf_pred = rf_model.predict(X_test)
 print("Accuracy:", accuracy_score(y_test, rf_pred))
 print("\nConfusion Matrix:\n", confusion_matrix(y_test, rf_pred))
 print("\nClassification Report:\n", classification_report(y_test, rf_pred))
+
+
+with open("credit_model.pkl", "wb") as file:
+    pickle.dump(model, file)
+
+print("Model saved successfully!")
