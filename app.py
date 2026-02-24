@@ -3,11 +3,53 @@ import pandas as pd
 import pickle
 import time
 
-# ===============================
-# Load trained model
-# ===============================
-with open("credit_model.pkl", "rb") as file:
-    model = pickle.load(file)
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+
+# Load dataset
+df = pd.read_csv("german_credit_data.csv")
+
+# Rename columns (same as before)
+df = df.rename(columns={
+    "laufkont": "Checking_Account_Status",
+    "laufzeit": "Loan_Duration",
+    "moral": "Credit_History",
+    "verw": "Loan_Purpose",
+    "hoehe": "Loan_Amount",
+    "sparkont": "Savings_Account",
+    "beszeit": "Employment_Duration",
+    "rate": "Installment_Rate",
+    "famges": "Personal_Status",
+    "buerge": "Guarantor",
+    "wohnzeit": "Residence_Duration",
+    "verm": "Property",
+    "alter": "Age",
+    "weitkred": "Other_Installment_Plans",
+    "wohn": "Housing",
+    "bishkred": "Existing_Credits",
+    "beruf": "Job",
+    "pers": "Dependents",
+    "telef": "Telephone",
+    "gastarb": "Foreign_Worker",
+    "kredit": "Risk"
+})
+
+X = df.drop("Risk", axis=1)
+y = df["Risk"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+model = Pipeline([
+    ('scaler', StandardScaler()),
+    ('logreg', LogisticRegression(max_iter=5000, class_weight='balanced'))
+])
+
+model.fit(X_train, y_train)
 
 # ===============================
 # Page config
