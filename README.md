@@ -7,6 +7,8 @@
 
 This project is a Machine Learning-based Loan Eligibility Prediction System built using the **German Credit Dataset**.  
 
+Deployed link -https://credit-scoring-model-i8qra64hopx7pysfkyv4yx.streamlit.app/
+
 It predicts whether a loan applicant is:
 
 - ✅ Low Risk -Loan Approved
