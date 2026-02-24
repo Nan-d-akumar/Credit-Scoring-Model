@@ -3,11 +3,15 @@ import pandas as pd
 import pickle
 import time
 
+# ===============================
 # Load trained model
+# ===============================
 with open("credit_model.pkl", "rb") as file:
     model = pickle.load(file)
 
+# ===============================
 # Page config
+# ===============================
 st.set_page_config(
     page_title="Loan Eligibility Predictor",
     page_icon="💳",
@@ -19,14 +23,14 @@ st.markdown("AI-Based Credit Risk Assessment")
 st.markdown("---")
 
 # ===============================
-# FORM (Prevents auto re-run)
+# FORM
 # ===============================
-
 with st.form("loan_form"):
 
     st.subheader("Applicant Information")
 
     age = st.slider("Age", 18, 75, 30)
+
     loan_amount = st.number_input(
         "Loan Amount",
         min_value=100,
@@ -37,60 +41,56 @@ with st.form("loan_form"):
 
     loan_duration = st.slider("Loan Duration (Months)", 6, 60, 12)
 
-    # Strict dropdowns (no typing)
     credit_history_label = st.selectbox(
         "Credit History",
-        options=[
+        [
             "All Credits Paid Duly",
             "Past Payment Delays",
             "Critical Account / Default History"
-        ],
-        index=0
+        ]
     )
 
     checking_label = st.selectbox(
         "Checking Account Status",
-        options=[
+        [
             "Low Balance",
             "Moderate Balance",
             "High Balance"
-        ],
-        index=0
+        ]
     )
 
     housing_label = st.selectbox(
         "Housing Type",
-        options=[
+        [
             "Rent",
             "Own House",
             "Free Accommodation"
-        ],
-        index=0
+        ]
     )
 
     job_label = st.selectbox(
         "Job Category",
-        options=[
+        [
             "Unemployed",
             "Skilled Employee",
             "Highly Skilled",
             "Management / Self-employed"
-        ],
-        index=1
+        ]
     )
 
     submit = st.form_submit_button("🔍 Check Loan Eligibility")
 
 # ===============================
-# Mapping After Submit
+# After Submit
 # ===============================
-
 if submit:
 
-    # Show loading animation
     with st.spinner("Analyzing credit profile..."):
         time.sleep(1)
 
+    # -------------------------------
+    # Mapping Dictionaries
+    # -------------------------------
     credit_map = {
         "All Credits Paid Duly": 1,
         "Past Payment Delays": 2,
@@ -116,6 +116,9 @@ if submit:
         "Management / Self-employed": 4
     }
 
+    # -------------------------------
+    # Prepare Model Input
+    # -------------------------------
     input_data = pd.DataFrame([{
         "Checking_Account_Status": checking_map[checking_label],
         "Loan_Duration": loan_duration,
@@ -139,6 +142,9 @@ if submit:
         "Foreign_Worker": 1
     }])
 
+    # -------------------------------
+    # Prediction
+    # -------------------------------
     prediction = model.predict(input_data)[0]
     probability = model.predict_proba(input_data)[0][1]
 
@@ -148,11 +154,66 @@ if submit:
     if prediction == 1:
         st.success("Loan Approved (Low Risk)")
     else:
-        st.error(" Loan Rejected (High Risk)")
+        st.error("Loan Rejected (High Risk)")
 
+        # ====================================
+        # Model-Based Explanation Section
+        # ====================================
+        st.markdown("### 🔍 Key Factors Affecting Approval")
+
+        log_reg = model.named_steps['logreg']
+        scaler = model.named_steps['scaler']
+
+        scaled_input = scaler.transform(input_data)
+        coefficients = log_reg.coef_[0]
+
+        contributions = scaled_input[0] * coefficients
+        feature_contributions = dict(zip(input_data.columns, contributions))
+
+        sorted_features = sorted(
+            feature_contributions.items(),
+            key=lambda x: x[1]
+        )
+
+        # Human-readable feature names
+        name_map = {
+            "Checking_Account_Status": "Checking Account Status",
+            "Loan_Duration": "Loan Duration",
+            "Credit_History": "Credit History",
+            "Loan_Amount": "Loan Amount",
+            "Savings_Account": "Savings Account",
+            "Employment_Duration": "Employment Duration",
+            "Installment_Rate": "Installment Rate",
+            "Personal_Status": "Personal Status",
+            "Guarantor": "Guarantor",
+            "Residence_Duration": "Residence Duration",
+            "Property": "Property",
+            "Age": "Age",
+            "Other_Installment_Plans": "Other Installment Plans",
+            "Housing": "Housing Type",
+            "Existing_Credits": "Existing Credits",
+            "Job": "Job Category",
+            "Dependents": "Dependents",
+            "Telephone": "Telephone",
+            "Foreign_Worker": "Foreign Worker"
+        }
+
+        # Show top 3 negative contributors
+        for feature, value in sorted_features[:3]:
+            if value < 0:
+                readable_name = name_map.get(
+                    feature,
+                    feature.replace("_", " ")
+                )
+                st.warning(
+                    f"• {readable_name} negatively impacted approval."
+                )
+
+    # -------------------------------
+    # Probability & Risk Badge
+    # -------------------------------
     st.metric("Approval Probability", f"{probability*100:.2f}%")
 
-    # Risk Level Badge
     if probability > 0.75:
         st.info("Risk Level: 🟢 Low Risk")
     elif probability > 0.5:
